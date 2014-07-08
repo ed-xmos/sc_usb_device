@@ -13,8 +13,9 @@
  *
  **/
 
-#include "hid_mouse_demo.h"
+#include <xscope.h>
 #include "xud.h"
+#include "debug_print.h"
 
 #if (USE_XSCOPE == 1)
 void xscope_user_init(void) {
@@ -66,19 +67,17 @@ unsigned char g_reportBuffer[] = {0, 0, 0, 0};
   on USB_TILE: out port p_adc_trig = PORT_ADC_TRIGGER;
 
 
-#if (U16 == 1)
-#define BITS 5          // Overall precision
-#define DEAD_ZONE 2     // Ensure that the mouse is stable when the joystick is not used
-#else
-#define BITS 8          // Overall precision
-#define DEAD_ZONE 0     // Ensure that the mouse is stable when the joystick is not used
-#endif
+void print_string(unsigned char *string, unsigned length)
+{
+    unsigned char *character;
+    for (int i=0; i<length; i++)
+    {
+        character = string + i;
+        debug_printf(character);
+    }
+    debug_printf("\n");
+}
 
-#define SENSITIVITY 1   // Sensitivity range 0 - 9
-
-#define SHIFT  (32 - BITS)
-#define MASK   ((1 << BITS) - 1)
-#define OFFSET (1 << (BITS - 1))
 
 /*
  * This function responds to the HID requests - it moves the pointers x axis based on ADC input
@@ -87,6 +86,9 @@ void printer_main(chanend c_ep_prt_out, chanend c_ep_prt_in, chanend c_adc)
 {
     unsigned data[2]; //For ADC
 
+    unsigned size;
+    unsigned char print_packet[1024];
+
     /* Initialise the XUD endpoints */
     XUD_ep ep_out = XUD_InitEp(c_ep_prt_out);
     XUD_ep ep_in = XUD_InitEp(c_ep_prt_in);
@@ -94,13 +96,6 @@ void printer_main(chanend c_ep_prt_out, chanend c_ep_prt_in, chanend c_adc)
     /* Configure and enable the ADC in the U device */
     adc_config_t adc_config = { { 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0, 0 };
 
-    if (U16)
-    {
-        adc_config.input_enable[2] = 1;
-        adc_config.input_enable[3] = 1;
-        adc_config.samples_per_packet = 2;
-    }
-    else
     {
         adc_config.input_enable[0] = 1;
         adc_config.samples_per_packet = 1;
@@ -117,9 +112,10 @@ void printer_main(chanend c_ep_prt_out, chanend c_ep_prt_in, chanend c_adc)
         adc_trigger_packet(p_adc_trig, adc_config);
         adc_read_packet(c_adc, adc_config, data);
 
+        XUD_GetBuffer(ep_out, print_packet, size); //TODO work out what should come here
+        debug_printf("Received %d print data bytes\n", size);
 
-        /* Send the buffer off to the host.  Note this will return when complete */
-        XUD_SetBuffer(ep_in, g_reportBuffer, 4);
+        print_string(print_packet, size);
     }
 }
 

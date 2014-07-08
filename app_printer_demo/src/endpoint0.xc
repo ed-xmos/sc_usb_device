@@ -2,8 +2,9 @@
  * @brief Implements endpoint zero for an example HID mouse device.
  */
 #include <xs1.h>
+#include <string.h>
+#include <xscope.h>
 
-#include "hid_mouse_demo.h"
 #include "usb_device.h"
 #include "usb_std_requests.h"
 #include "usb_std_descriptors.h"
@@ -89,30 +90,43 @@ static char * unsafe stringDescriptors[]=
     "Test config",          // iConfiguration string
 };}
 
-/* Class specific string 1288 string descriptor */
-static unsigned char deviceIDstring[] = "  Bollocks!!"; //MSB str length, LSB str length, string
+/* Class specific string IEEE1288 string descriptor */
+//static unsigned char deviceIDstring[] = "  Bollocks!!";
+static unsigned char deviceIDstring[] = "  MFG:Generic;MDL:Generic_/_Text_Only;CMD:1284.4;CLS:PRINTER;DES:Generic text only printer;";
+
+/*
+static const T_prn_Device_ID prn_Device_ID =
+{
+   0x00, (12 + 24 + 11 + 12 + 30),        // size of string, two-bytes, MSB first
+   {                                      // these strings are concatenated by compiler
+       "MFG:Generic;"                     //   manufacturer (case sensitive)
+       "MDL:Generic_/_Text_Only;"         //   model (case sensitive)
+       "CMD:1284.4;"                      //   PDL command set
+       "CLS:PRINTER;"                     //   class
+       "DES:Generic text only printer;"   //   description
+   }
+};*/
 
 
 /* HID Class Requests */
 XUD_Result_t PrinterInterfaceClassRequests(XUD_ep c_ep0_out, XUD_ep c_ep0_in, USB_SetupPacket_t sp)
 {
-    unsigned buffer[64];
-    unsigned tmp;
 
     unsigned char PRT_STATUS[] = {0b00011000}; // Paper not empty, selected, no error
 
     deviceIDstring[0] = 0;
-    deviceIDstring[1] = sizeof(deviceIDstring);
+    deviceIDstring[1] = sizeof(deviceIDstring-1);
 
     switch(sp.bRequest)
     {
         case PRINTER_GET_DEVICE_ID:
 
             debug_printf("get device id\n");
+            debug_printf(&deviceIDstring[2]); //Skip first two characters
+            debug_printf("\n");
 
-            debug_printf(deviceIDstring);
             return XUD_DoGetRequest(c_ep0_out, c_ep0_in, (deviceIDstring, unsigned char []),
-                    sizeof(deviceIDstring), sp.wLength);
+                    sizeof(deviceIDstring-1), sp.wLength);
 
             break;
 
