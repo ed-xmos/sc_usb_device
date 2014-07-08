@@ -1,0 +1,7 @@
+#Tue Jul 08 11:44:56 BST 2014
+eclipse.preferences.version=1
+environment/project/com.xmos.cdt.toolchain.886697835/XMOS_MODULE_PATH/delimiter=\:
+environment/project/com.xmos.cdt.toolchain.886697835/XMOS_MODULE_PATH/operation=append
+environment/project/com.xmos.cdt.toolchain.886697835/XMOS_MODULE_PATH/value=/Users/Ed/apps/scratch/USB-Printer/sc_usb_device/__mass_storage/app_example_usb_msc\:/Users/Ed/apps/scratch/USB-Printer/sc_util/module_logging\:/Users/Ed/apps/scratch/USB-Printer/sc_usb_device/__mass_storage/module_mass_storage\:/Users/Ed/apps/scratch/USB-Printer/sc_usb/module_usb_shared\:/Users/Ed/apps/scratch/USB-Printer/sc_u_series_support/module_usb_tile_support\:/Users/Ed/apps/scratch/USB-Printer/sc_xud/module_xud
+environment/project/com.xmos.cdt.toolchain.886697835/append=true
+environment/project/com.xmos.cdt.toolchain.886697835/appendContributed=true
