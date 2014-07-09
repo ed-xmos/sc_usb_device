@@ -16,6 +16,7 @@
 #include <xscope.h>
 #include "xud.h"
 #include "debug_print.h"
+#include "print.h"
 
 #if (USE_XSCOPE == 1)
 void xscope_user_init(void) {
@@ -66,16 +67,18 @@ unsigned char g_reportBuffer[] = {0, 0, 0, 0};
   /* Port for ADC triggering */
   on USB_TILE: out port p_adc_trig = PORT_ADC_TRIGGER;
 
-
-void print_string(unsigned char *string, unsigned length)
+ //Version of print string that doesn't get thrown off by null */
+void print_string(unsigned char *string, unsigned size)
 {
-    unsigned char *character;
-    for (int i=0; i<length; i++)
+    printstrln(string);
+    for (int i=0; i<size; i++)
     {
-        character = string + i;
-        debug_printf(character);
+        printstr("0x");
+        printhex(*string);
+        printchar(',');
+        string++;
     }
-    debug_printf("\n");
+    printchar('\n');
 }
 
 
@@ -114,17 +117,17 @@ void printer_main(chanend c_ep_prt_out, chanend c_ep_prt_in, chanend c_adc)
 
         XUD_GetBuffer(ep_out, print_packet, size); //TODO work out what should come here
         debug_printf("Received %d print data bytes\n", size);
-
         print_string(print_packet, size);
+
+
     }
 }
 
 
 
 /*
- * The main function runs three cores: the XUD manager, Endpoint 0, and a HID endpoint. An array of
- * channels is used for both IN and OUT endpoints, endpoint zero requires both, HID requires just an
- * IN endpoint to send HID reports to the host.
+ * The main function runs three cores: the XUD manager, Endpoint 0, and a Printer endpoint. An array of
+ * channels is used for both IN and OUT endpoints
  */
 int main()
 {

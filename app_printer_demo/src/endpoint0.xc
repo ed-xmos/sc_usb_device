@@ -44,7 +44,7 @@ static unsigned char devDesc[] =
 static unsigned char cfgDesc[] = {
     0x09,                 /* 0  bLength */
     USB_DESCTYPE_CONFIGURATION, /* 1  bDescriptortype = configuration*/
-    0x20, 0x00,           /* 2  wTotalLength of all descriptors */
+    0x19, 0x00,           /* 2  wTotalLength of all descriptors */
     0x01,                 /* 4  bNumInterfaces */
     0x01,                 /* 5  bConfigurationValue */
     0x03,                 /* 6  iConfiguration - index of string*/
@@ -58,7 +58,7 @@ static unsigned char cfgDesc[] = {
     0x01,                 /* 4: bNumEndpoints */
     USB_CLASS_PRINTER,    /* 5: bInterfaceClass */
     USB_PRINTER_SUBCLASS, /* 6: bInterfaceSubClass */
-    USB_PRINTER_BIDIRECTIONAL, /* 7: bInterfaceProtocol*/
+    USB_PRINTER_UNIDIRECTIONAL, /* 7: bInterfaceProtocol*/
     0x00,                 /* 8  iInterface */
 
     0x07,                 /* 0  bLength */
@@ -69,6 +69,7 @@ static unsigned char cfgDesc[] = {
     0x02,                 /* 5  wMaxPacketSize - High */
     0x01,                 /* 6  bInterval */
 
+#if 0
     0x07,                 /* 0  bLength */
     USB_DESCTYPE_ENDPOINT,/* 1  bDescriptorType */
     0x81,                 /* 2  bEndpointAddress - EP1, IN*/
@@ -76,7 +77,7 @@ static unsigned char cfgDesc[] = {
     0x00,                 /* 4  wMaxPacketSize - Low */
     0x02,                 /* 5  wMaxPacketSize - High */
     0x01                  /* 6  bInterval */
-
+#endif
 };
 
 
@@ -91,7 +92,6 @@ static char * unsafe stringDescriptors[]=
 };}
 
 /* Class specific string IEEE1288 string descriptor */
-//static unsigned char deviceIDstring[] = "  Bollocks!!";
 static unsigned char deviceIDstring[] = "  MFG:Generic;MDL:Generic_/_Text_Only;CMD:1284.4;CLS:PRINTER;DES:Generic text only printer;";
 
 /*
