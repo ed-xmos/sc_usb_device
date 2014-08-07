@@ -1,5 +1,5 @@
 /*
- * @brief Implements endpoint zero for an example HID mouse device.
+ * @brief Implements endpoint zero for an example Printer class device.
  */
 #include <xs1.h>
 #include <string.h>
@@ -21,8 +21,8 @@ static unsigned char devDesc[] =
 {
     0x12,                  /* 0  bLength */
     USB_DESCTYPE_DEVICE,   /* 1  bdescriptorType */
-    0x00,                  /* 2  bcdUSB */
-    0x02,                  /* 3  bcdUSB */
+    0x00,                  /* 2  bcdUSB version */
+    0x02,                  /* 3  bcdUSB version */
     0x00,                  /* 4  bDeviceClass - Specified by interface */
     0x00,                  /* 5  bDeviceSubClass  - Specified by interface */
     0x00,                  /* 6  bDeviceProtocol  - Specified by interface */
@@ -82,7 +82,7 @@ static unsigned char cfgDesc[] = {
 
 
 unsafe{
-/* String table */
+/* String table - unsafe as accessed via shared memory */
 static char * unsafe stringDescriptors[]=
 {
     "\x09\x04",             // Language ID string (US English)
@@ -95,24 +95,19 @@ static char * unsafe stringDescriptors[]=
 static unsigned char deviceIDstring[] = "  MFG:Generic;MDL:Generic_/_Text_Only;CMD:1284.4;CLS:PRINTER;DES:Generic text only printer;";
 
 /*
-static const T_prn_Device_ID prn_Device_ID =
-{
-   0x00, (12 + 24 + 11 + 12 + 30),        // size of string, two-bytes, MSB first
-   {                                      // these strings are concatenated by compiler
-       "MFG:Generic;"                     //   manufacturer (case sensitive)
-       "MDL:Generic_/_Text_Only;"         //   model (case sensitive)
-       "CMD:1284.4;"                      //   PDL command set
-       "CLS:PRINTER;"                     //   class
-       "DES:Generic text only printer;"   //   description
-   }
-};*/
+       "MFG:Generic;"                     -   manufacturer (case sensitive)
+       "MDL:Generic_/_Text_Only;"         -   model (case sensitive)
+       "CMD:1284.4;"                      -   PDL command set
+       "CLS:PRINTER;"                     -   class
+       "DES:Generic text only printer;"   -   description
+*/
 
 
-/* HID Class Requests */
+/* Printer Class Requests */
 XUD_Result_t PrinterInterfaceClassRequests(XUD_ep c_ep0_out, XUD_ep c_ep0_in, USB_SetupPacket_t sp)
 {
 
-    unsigned char PRT_STATUS[] = {0b00011000}; // Paper not empty, selected, no error
+    unsigned char PRT_STATUS[] = {0b00011000}; /* Paper not empty, selected, no error */
 
     deviceIDstring[0] = 0;
     deviceIDstring[1] = sizeof(deviceIDstring-1);
@@ -120,26 +115,23 @@ XUD_Result_t PrinterInterfaceClassRequests(XUD_ep c_ep0_out, XUD_ep c_ep0_in, US
     switch(sp.bRequest)
     {
         case PRINTER_GET_DEVICE_ID:
-
-            debug_printf("get device id\n");
+            debug_printf("Class request - get device id\n");
             debug_printf(&deviceIDstring[2]); //Skip first two characters
             debug_printf("\n");
 
             return XUD_DoGetRequest(c_ep0_out, c_ep0_in, (deviceIDstring, unsigned char []),
                     sizeof(deviceIDstring-1), sp.wLength);
-
             break;
 
         case PRINTER_GET_PORT_STATUS:
-            debug_printf("get port status id\n");
+            debug_printf("Class request - get port status id\n");
             return XUD_DoGetRequest(c_ep0_out, c_ep0_in, PRT_STATUS, 1, sp.wLength);
-
             break;
 
         case PRINTER_SOFT_RESET:
-            debug_printf("soft reset id\n");
+            debug_printf("Class request - soft reset id\n");
             /* Do nothing - i.e. STALL */
-            /* TODO flush buffers and reset Bulk In/Out endpoint to default state*/
+            /* TODO flush buffers and reset Bulk Out endpoint to default state*/
             break;
     }
 
@@ -186,36 +178,9 @@ void Endpoint0(chanend chan_ep0_out, chanend chan_ep0_in)
                 }
             }
 
+            /* Handle specific requests first */
             switch(bmRequestType)
             {
-                /* Direction: Device-to-host
-                 * Type: Standard
-                 * Recipient: Interface
-                 */
-                case USB_BMREQ_D2H_STANDARD_INT:
-
-                    if(sp.bRequest == USB_GET_DESCRIPTOR)
-                    {
-                        /* HID Interface is Interface 0 */
-                        if(sp.wIndex == 0)
-                        {
-                            /* Look at Descriptor Type (high-byte of wValue) */
-                            unsigned short descriptorType = sp.wValue & 0xff00;
-
-                            /*
-                            switch(descriptorType)
-                            {
-                                case HID_HID:
-                                    result = XUD_DoGetRequest(ep0_out, ep0_in, hidDescriptor, sizeof(hidDescriptor), sp.wLength);
-                                    break;
-
-                                case HID_REPORT:
-                                    result = XUD_DoGetRequest(ep0_out, ep0_in, hidReportDescriptor, sizeof(hidReportDescriptor), sp.wLength);
-                                    break;
-                            }*/
-                        }
-                    }
-                    break;
 
                 /* Direction: Device-to-host and Host-to-device
                  * Type: Class
@@ -224,7 +189,7 @@ void Endpoint0(chanend chan_ep0_out, chanend chan_ep0_in)
                 case USB_BMREQ_H2D_CLASS_INT:
                 case USB_BMREQ_D2H_CLASS_INT:
 
-                    /* Inspect for HID interface num */
+                    /* Inspect for printer interface num */
                     if(sp.wIndex == 0)
                     {
                         /* Returns  XUD_RES_OKAY if handled,
@@ -236,7 +201,7 @@ void Endpoint0(chanend chan_ep0_out, chanend chan_ep0_in)
             }
         }
 
-        /* If we haven't handled the request about then do standard enumeration requests */
+        /* If we haven't handled the request above then do standard enumeration requests */
         if(result == XUD_RES_ERR )
         {
             /* Returns  XUD_RES_OKAY if handled okay,

@@ -4,7 +4,7 @@
  * Terms and conditions covering the use of this code can
  * be found in the Xmos End User License Agreement.
  *
- * Copyright XMOS Ltd 2013
+ * Copyright XMOS Ltd 2014
  *
  * In the case where this code is a modification of existing code
  * under a separate license, the separate license terms are shown
@@ -21,7 +21,7 @@
 #if (USE_XSCOPE == 1)
 void xscope_user_init(void) {
     xscope_register(0, 0, "", 0, "");
-    xscope_config_io(XSCOPE_IO_BASIC);
+    xscope_config_io(XSCOPE_IO_BASIC); /* Enable fast printing over links */
 }
 #endif
 
@@ -83,14 +83,13 @@ void print_string(unsigned char *string, unsigned size)
 
 
 /*
- * This function responds to the HID requests - it moves the pointers x axis based on ADC input
- */
-void printer_main(chanend c_ep_prt_out, chanend c_ep_prt_in, chanend c_adc)
+ * This function receives the printer endpoint transfers from the host */
+void printer_main(chanend c_ep_prt_out)
 {
-    unsigned data[2]; //For ADC
-
     unsigned size;
-    unsigned char print_packet[1024];
+    unsigned char print_packet[1024]; /* Buffer for storing printer packets sent from host */
+
+    debug_printf("USB printer class demo started\n");
 
     /* Initialise the XUD endpoints */
     XUD_ep ep_out = XUD_InitEp(c_ep_prt_out);
@@ -110,16 +109,9 @@ void printer_main(chanend c_ep_prt_out, chanend c_ep_prt_in, chanend c_adc)
 
     while (1)
     {
-
-        /* Get ADC input */
-        adc_trigger_packet(p_adc_trig, adc_config);
-        adc_read_packet(c_adc, adc_config, data);
-
-        XUD_GetBuffer(ep_out, print_packet, size); //TODO work out what should come here
-        debug_printf("Received %d print data bytes\n", size);
+        XUD_GetBuffer(ep_out, print_packet, size);          /* Blocking read on the endpoint buffer */
+        debug_printf("**** Received %d byte print buffer ****\n", size);
         print_string(print_packet, size);
-
-
     }
 }
 
